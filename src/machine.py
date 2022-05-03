@@ -26,8 +26,9 @@ class Meta:
             
         else:
             if result[0][0] != 1:
-                self.cur.execute("UPDATE stocks SET class = (?), register=1 WHERE register = 0", (grate,))
+                self.cur.execute("UPDATE stocks SET class = (?), register=1 WHERE register = 0 AND member_id=(?)", (grate,member_id))
                 self.con.commit()
+                await msg.reply("Готово",reply_markup=buttons.startMenu)
 
     async def state_machine(self,msg):
         member_id = msg.from_user.id
@@ -48,7 +49,10 @@ class Meta:
             if msg['text'] == "⏳ Сколько осталось времени":
                 text = self.left_time(member_id)
                 await msg.reply(text)
-            
+            if msg['text'] == "ℹ️ Изменить класс":
+                self.cur.execute("UPDATE stocks SET register=0 WHERE member_id=(?)", (member_id,))
+                self.con.commit()
+                await msg.reply("Сейчас напиши на какой класс хочешь поменять *8Г*")
 
     def left_time(self, member_id):
         page, grate =  self.number_grate(member_id)
@@ -85,14 +89,15 @@ class Meta:
         if grate == 'а':
             grate = 0
 
-        if grate == 'б':
+        elif grate == 'б':
             grate = 1
 
-        if grate == 'в':
+        elif grate == 'в':
             grate = 2
 
-        if grate == 'г':
+        elif grate == 'г':
             grate = 3
+        print(grate)
         return number,grate
 
     def get_dayid(self,member_id,today):
@@ -121,7 +126,8 @@ class Meta:
         
         text=''
         for i in range(int(id_raw-reset),id_raw):
-            if str(self.pdf_table[page].iloc[i,grate*2+2]) == 'nan':
-                continue
-            text= text + str(self.pdf_table[page].iloc[i,1]) + ' - ' + str(self.pdf_table[page].iloc[i,grate*2+2]) + '\n'
+            #if str(self.pdf_table[page].iloc[i,grate*2+2]) == 'nan':
+            #    continue
+            text=( text + str(self.pdf_table[page].iloc[i,1]) + ' - ' + str(self.pdf_table[page].iloc[i,grate*2+2]) +
+             " " + str(self.pdf_table[page].iloc[i,grate*2+3]).split('.')[0] + '\n')
         return text
